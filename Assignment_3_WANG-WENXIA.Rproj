@@ -1,13 +1,141 @@
-Version: 1.0
+##### read.table #####
 
-RestoreWorkspace: Default
-SaveWorkspace: Default
-AlwaysSaveHistory: Default
+priceData1 <- read.table("C:/Users/HONGYAN/Desktop/data/price_index_Feb20201.csv",sep=",",header=T)
+head(priceData1)
 
-EnableCodeIndexing: Yes
-UseSpacesForTab: Yes
-NumSpacesForTab: 2
-Encoding: UTF-8
+### read.xlsx #########
+library(rJava)
+library(xlsx)
+priceData2<- read.xlsx("C:/Users/HONGYAN/Desktop/data/price_index_Feb20201.xlsx",sheetIndex=1,header=T)
 
-RnwWeave: Sweave
-LaTeX: pdfLaTeX
+##### read.csv ######
+priceData <- read.csv("C:/Users/HONGYAN/Desktop/data/price_index_Feb20201.csv",header = T)
+head(priceData)
+
+head(priceData,n=3)
+tail(priceData,n=3)
+
+
+##### summarizing data ##### 
+names(priceData)
+summary(priceData)
+
+###### mpre in depth information 逐行显示
+str(priceData)
+
+##### quantiles of quantitative variables #####
+quantile(priceData$counciDistrict,na.rm=TRUE)
+
+quantile(priceData$counciDistrict,probs=c(0.5,0.75,0.9))
+
+### make table ### ifany统计NA频数,no不统计
+
+table(priceData$Series_title_1,useNA ="ifany")
+
+table(priceData$counciDistrict,priceData$Series_title_1)
+
+### check for missing values ###
+
+sum(is.na(priceData$counciDistrict))
+
+any(is.na(priceData$counciDistrict))
+
+all(priceData$Series_title_1 >0)
+
+#### row and column sums ###
+
+colSums(is.na(priceData))
+all(colSums(is.na(priceData))==0)
+
+
+#### values with specific characteristics ### a是否in b
+
+table(priceData$Series_title_1 %in% c("21212","21213"))
+
+head(priceData[priceData$Series_title_1 %in% c("21212","21213"),])
+
+specdata<- priceData[priceData$Series_title_1 %in% c("21212","21213"),]
+specdata
+
+
+######## create data in a dataset ### 
+install.packages("tidyr")
+library(tidyr)
+
+priceData <- read.csv("C:/Users/HONGYAN/Desktop/data/price_index_Feb20201.csv")
+priceData <- data.frame(priceData,header=T)
+
+head(priceData)                     
+dim(priceData)
+
+#priceData <- transform(priceData,Series_title_1 = as.character(Series_title_1))
+class(priceData$Series_title_1)
+priceData$nearMe<- priceData$Series_title_1 %in% c("Auckland","Wellington")
+head(priceData)
+
+table(priceData$nearMe)
+
+
+### creating binary variables ###
+priceData$SeriesWrong<- ifelse(priceData$Series_title_1<0,"Yes","No")
+head(priceData)
+
+table(priceData$SeriesWrong,priceData$Series_title_1< 0)
+
+str(is.na(priceData$Series_title_1))
+
+
+###### creating factor variables ######
+
+priceData$zcf <- factor(priceData$Series_title_1)
+priceData$zcf[1:10]
+
+class(priceData$zcf)
+
+### creating categorical variables ##
+# Series_title_1cannot use cut, this is data_value
+#priceData$Data_value <- c(as.numberic(priceData$Data_value))
+
+priceData$dataGr <- cut(priceData$DATA_VAL,breaks=quantile(priceData$DATA_VAL))
+table(priceData$dataGr)
+
+table(priceData$dataGr,priceData$DATA_VAL)
+
+
+#### mutate  ################
+install.packages("Hmisc")
+install.packages("plyr")
+
+
+library(plyr)
+library(Hmisc)
+
+priceData$dataGr <- cut2(priceData$DATA_VAL,g=4)
+table(priceData$dataGr)
+
+
+######### averaging values #####
+head(priceData)
+
+tapply(priceData$DATA_VAL,priceData$Series_title_1,sum)
+
+## split ##
+spIns<- split(priceData$DATA_VAL,priceData$Series_title_1)
+spIns
+
+## apply ##
+priceDATA_VAL<- lapply(spIns, sum)
+priceDATA_VAL
+
+## combine ##
+unlist(priceDATA_VAL)
+sapply(spIns,sum)
+
+
+### another way - plyr package ###
+
+ddply(priceData,.(Series_title_1),summarise,sum=sum(DATA_VAL))
+Series_title_1Sums<- ddply(priceData,.(Series_title_1),summarise,sum=ave(DATA_VAL,FUN=sum))
+dim(Series_title_1Sums)
+
+head(Series_title_1Sums)
